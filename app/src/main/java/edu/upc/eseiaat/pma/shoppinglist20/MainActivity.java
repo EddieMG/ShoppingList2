@@ -24,11 +24,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import junit.framework.Assert;
+
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -37,66 +42,72 @@ import static android.provider.Telephony.Mms.Part.FILENAME;
 public class MainActivity extends AppCompatActivity {
 
     private static final int MAX_BYTES =8000 ;
-    ArrayList<HashMap<String,String>>data;
+   ArrayList<HashMap<String,String>>data;
     private String[] titleArray,subItemArray;
     private ListView list;
     private Button btn_add;
     private EditText edit_item;
     private SimpleAdapter adapter;
-//    private HashMap<String,String> datum;
+//  private HashMap<String,String> datum;
     private AlertDialog.Builder alert;
     private Integer PreuTotal;
     private TextView Total;
-//    private void writeItemList(){
-//
-//       try {
-//           FileOutputStream fos =openFileOutput(FILENAME, Context.MODE_PRIVATE);
-//            DataOutputStream dout = new DataOutputStream(fos);
-//            dout.write(data); // Save line count
-//            dout.flush(); // Flush stream ...
-//            dout.close(); // ... and close.
-//           fos.close();
-//       } catch (FileNotFoundException e) {
-//           Log.e("Eddie","writeItemList: FileNotFoundException");
-////
-//      } catch (IOException e) {
-//           Log.e("Eddie","writeItemList: IOException ");
-////
-//       }
-////
-//   }
-////
-//
-//    private  void readItemList(){
-//        itemlist= new ArrayList<>();
-//        try {
-//            FileInputStream fis= openFileInput(FILENAME);
-//            byte [] buffer= new byte[MAX_BYTES];
-//            int nread=fis.read(buffer);
-//            if(nread>0 ) {
-//                String content = new String(buffer, 0, nread);
-//                String[] lines = content.split("\n");
-//                for (String line : lines) {
-//                    String[] parts = line.split(";");
-//                    itemlist.add(new ShoppingItem(parts[0], parts[1].equals("true")));
-//
-//                }
-//            }
-//            fis.close();
-//        } catch (FileNotFoundException e) {
-//            Log.i("Eddie","readItemList: FileNotFoundException ");
-//
-//        } catch (IOException e) {
-//            Log.e("Eddie","readItemList: IOException ");
-//
-//        }
-//
-//
-//    }
+
+    private static final  String FILENAME = "shoppinglist.txt";
+
+ private void writeItemList(HashMap<String,String> datainput){
+
+       try {
+           // File file = new File("file");
+            FileOutputStream fos = openFileOutput(FILENAME, Context.MODE_PRIVATE);
+            ObjectOutputStream s = new ObjectOutputStream(fos);
+            s.writeObject(datainput); // Save line count
+            s.close(); // ... and close.
+            fos.close();
+       } catch (FileNotFoundException e) {
+           Log.e("Eddie","writeItemList: FileNotFoundException");
+      } catch (IOException e) {
+           Log.e("Eddie","writeItemList: IOException ");
+       }
+   }
+
+   private  void readItemList() {
+       try {
+        //   File file = new File("file");
+           FileInputStream in = openFileInput(FILENAME);
+           ObjectInputStream s = new ObjectInputStream(in);
+           HashMap<String,String> datainput = (HashMap<String,String>) s.readObject();
+           Log.e("Eddie","read");
+           data.add(datainput);
+           adapter.notifyDataSetChanged();
+           s.close();
+
+         // Assert.assertEquals(data.hashCode(), data.hashCode());
+        //  Assert.assertEquals(data.toString(), data.toString());
+        //  Assert.assertTrue(data.equals(data));
+
+       } catch (FileNotFoundException e) {
+           e.printStackTrace();
+       } catch (IOException e) {
+           e.printStackTrace();
+       } catch (ClassNotFoundException e) {
+           e.printStackTrace();
+       }
+   }
+
+  /* @Override
+    public void onStop() {
+
+        super.onStop();
+
+        writeItemList();
+    }*/
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
 
         PreuTotal=0;
         list = (ListView)findViewById(R.id.list);
@@ -108,6 +119,7 @@ public class MainActivity extends AppCompatActivity {
 
         adapter= new SimpleAdapter(this,data,android.R.layout.simple_list_item_2,new String[]{"title","preu"},new int[]{android.R.id.text1,android.R.id.text2});
         list.setAdapter(adapter);
+        readItemList();
 
         list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
@@ -156,14 +168,16 @@ public class MainActivity extends AppCompatActivity {
 
                         String Nom = editText.getText().toString();
                         String Preu = editText1.getText().toString();
-                        HashMap<String,String> datum2 = new HashMap<String, String>();
+                       final  HashMap<String,String> datum2 = new HashMap<String, String>();
                         datum2.put("title",Nom);
                         datum2.put("preu",Preu+" €");
                         PreuTotal=PreuTotal+ Integer.parseInt(Preu);
                         Total.setText("Preu Total: "+PreuTotal+"€");
                         if (!Nom.isEmpty()){
+                            Log.e("Eddie","datum");
                             data.add(datum2);
                             adapter.notifyDataSetChanged();
+                            writeItemList(datum2);
 
                         }
                     }
@@ -181,10 +195,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void maybeRemoveItem(final int pos) {
-
-
-
-
 
                 data.remove(pos);
                 adapter.notifyDataSetChanged();
