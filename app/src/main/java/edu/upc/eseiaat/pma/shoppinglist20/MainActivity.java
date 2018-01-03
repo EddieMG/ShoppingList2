@@ -92,12 +92,18 @@ public class MainActivity extends AppCompatActivity {
                    String[] parts = line.split(";");
                    String title = parts[0];
                    String preu = parts[1];
+                   if (parts[1].isEmpty()){
+                       return;
+                   }
+                   String[] preu_partit = parts[1].split(" ");
+                   String valor_preu = preu_partit[0];
 
                    HashMap<String, String> datum2 = new HashMap<String, String>();
                    datum2.put("title", title);
                    datum2.put("preu", preu);
-                   //PreuTotal = PreuTotal + Integer.parseInt(preu.);
-                   //Total.setText("Preu Total: " + PreuTotal + "€");
+                   int preu_int = Integer.valueOf(valor_preu);
+                   PreuTotal = PreuTotal + preu_int;
+                   Total.setText("Preu Total: " + PreuTotal + "€");
                    if (!title.isEmpty()) {
                        Log.e("Eddie", "datum");
                        data.add(datum2);
@@ -217,9 +223,15 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void maybeRemoveItem(final int pos) {
-
+                HashMap<String, String> hash = data.get(pos);
+                String preu = hash.get("preu");
+                String[] preu_partit = preu.split(" ");
+                String valor_preu = preu_partit[0];
+                int valor = Integer.valueOf(valor_preu);
                 data.remove(pos);
                 adapter.notifyDataSetChanged();
+                PreuTotal = PreuTotal - valor;
+                Total.setText("Preu Total: "+PreuTotal+"€");
             }
 
 
